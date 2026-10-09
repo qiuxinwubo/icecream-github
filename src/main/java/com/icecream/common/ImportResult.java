@@ -1,4 +1,4 @@
-package com.icecream.dto;
+package com.icecream.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

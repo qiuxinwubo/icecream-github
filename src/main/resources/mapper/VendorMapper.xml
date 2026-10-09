@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.icecream.mapper.VendorMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.icecream.entity.Vendor">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="contact" property="contact"/>
+        <result column="phone" property="phone"/>
+        <result column="address" property="address"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO vendor(name, contact, phone, address, remark)
+        VALUES(#{name}, #{contact}, #{phone}, #{address}, #{remark})
+    </insert>
+
+    <update id="update">
+        UPDATE vendor SET
+        name = #{name},
+        contact = #{contact},
+        phone = #{phone},
+        address = #{address},
+        remark = #{remark},
+        update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM vendor WHERE id = #{id}
+    </delete>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM vendor WHERE id = #{id}
+    </select>
+
+    <select id="selectByName" resultMap="BaseResultMap">
+        SELECT * FROM vendor WHERE name = #{name}
+    </select>
+
+    <select id="listAll" resultMap="BaseResultMap">
+        SELECT * FROM vendor ORDER BY id DESC
+    </select>
+
+</mapper>
