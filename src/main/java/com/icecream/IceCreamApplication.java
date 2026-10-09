@@ -1,15 +1,18 @@
 package com.icecream;
 
 import org.flywaydb.core.Flyway;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import javax.sql.DataSource;
 import java.io.File;
 
 @SpringBootApplication
+@MapperScan("com.icecream.mapper")
 public class IceCreamApplication {
 
 	public static void main(String[] args) {

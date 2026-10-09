@@ -1,7 +1,11 @@
 package com.icecream.service;
 
+import com.icecream.common.ImportResult;
 import com.icecream.entity.Goods;
-import java.util.List;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.util.Map;
 
 public interface GoodsService {
@@ -10,5 +14,6 @@ public interface GoodsService {
     void add(Goods goods);
     void update(Goods goods);
     void delete(String barcode);
-    void importGoods(List<Goods> list);
+    ImportResult importGoods(MultipartFile file) throws IOException;
+    void export(String barcode, String name, Long vendorId, HttpServletResponse response) throws IOException;
 }

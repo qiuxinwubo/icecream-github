@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/factory")
+@RequestMapping("/factory")
 public class FactoryController {
 
     @Resource

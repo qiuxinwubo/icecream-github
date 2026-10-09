@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.example.icecream.mapper.GoodsMapper">
+<mapper namespace="com.icecream.mapper.GoodsMapper">
 
-    <resultMap id="BaseResultMap" type="com.example.icecream.entity.Goods">
+    <resultMap id="BaseResultMap" type="com.icecream.entity.Goods">
         <id column="id" property="id"/>
         <result column="barcode" property="barcode"/>
         <result column="name" property="name"/>
         <result column="wholesale_price" property="wholesalePrice"/>
         <result column="retail_price" property="retailPrice"/>
         <result column="vendor_id" property="vendorId"/>
+        <result column="vendor_name" property="vendorName"/>  <!-- 新增 -->
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
@@ -20,12 +21,14 @@
     </insert>
 
     <update id="update">
-        UPDATE goods SET
-        name = #{name},
-        wholesale_price = #{wholesalePrice},
-        retail_price = #{retailPrice},
-        vendor_id = #{vendorId},
-        update_time = CURRENT_TIMESTAMP
+        UPDATE goods
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="wholesalePrice != null">wholesale_price = #{wholesalePrice},</if>
+            <if test="retailPrice != null">retail_price = #{retailPrice},</if>
+            <if test="vendorId != null">vendor_id = #{vendorId},</if>
+            update_time = CURRENT_TIMESTAMP
+        </trim>
         WHERE barcode = #{barcode}
     </update>
 
@@ -33,44 +36,55 @@
         DELETE FROM goods WHERE barcode = #{barcode}
     </delete>
 
+    <!-- 查询单条也带 JOIN -->
     <select id="selectByBarcode" resultMap="BaseResultMap">
-        SELECT * FROM goods WHERE barcode = #{barcode}
+        SELECT g.*, f.name AS vendor_name
+        FROM goods g
+        LEFT JOIN factory f ON g.vendor_id = f.id
+        WHERE g.barcode = #{barcode}
     </select>
 
+    <!-- 分页搜索也带 JOIN -->
     <select id="search" resultMap="BaseResultMap">
-        SELECT * FROM goods
+        SELECT g.*, f.name AS vendor_name
+        FROM goods g
+        LEFT JOIN factory f ON g.vendor_id = f.id
         <where>
             <if test="barcode != null and barcode != ''">
-                AND barcode LIKE '%' || #{barcode} || '%'
+                AND g.barcode LIKE '%' || #{barcode} || '%'
             </if>
             <if test="name != null and name != ''">
-                AND name LIKE '%' || #{name} || '%'
+                AND g.name LIKE '%' || #{name} || '%'
             </if>
             <if test="vendorId != null">
-                AND vendor_id = #{vendorId}
+                AND g.vendor_id = #{vendorId}
             </if>
         </where>
-        ORDER BY id DESC
+        ORDER BY g.id DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
     <select id="count" resultType="long">
-        SELECT COUNT(*) FROM goods
+        SELECT COUNT(*) FROM goods g
         <where>
             <if test="barcode != null and barcode != ''">
-                AND barcode LIKE '%' || #{barcode} || '%'
+                AND g.barcode LIKE '%' || #{barcode} || '%'
             </if>
             <if test="name != null and name != ''">
-                AND name LIKE '%' || #{name} || '%'
+                AND g.name LIKE '%' || #{name} || '%'
             </if>
             <if test="vendorId != null">
-                AND vendor_id = #{vendorId}
+                AND g.vendor_id = #{vendorId}
             </if>
         </where>
     </select>
 
+    <!-- 列表也带 JOIN -->
     <select id="listAll" resultMap="BaseResultMap">
-        SELECT * FROM goods ORDER BY id DESC
+        SELECT g.*, f.name AS vendor_name
+        FROM goods g
+        LEFT JOIN factory f ON g.vendor_id = f.id
+        ORDER BY g.id DESC
     </select>
 
 </mapper>

@@ -1,14 +1,18 @@
 package com.icecream.controller;
 
+import com.icecream.common.ImportResult;
 import com.icecream.entity.Goods;
 import com.icecream.service.GoodsService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/goods")
+@RequestMapping("/goods")
 public class GoodsController {
 
     @Resource
@@ -56,5 +60,19 @@ public class GoodsController {
     public Map<String, Object> delete(@RequestBody Map<String, String> body) {
         goodsService.delete(body.get("barcode"));
         return Map.of("status", 0);
+    }
+
+    @GetMapping("/export")
+    public void export(@RequestParam(required = false) String barcode,
+                       @RequestParam(required = false) String name,
+                       @RequestParam(required = false) Long vendorId,
+                       HttpServletResponse response) throws IOException {
+        goodsService.export(barcode, name, vendorId, response);
+    }
+
+    @PostMapping("/import")
+    public ImportResult importGoods(@RequestParam("file") MultipartFile file) throws IOException {
+        ImportResult result = goodsService.importGoods(file);
+        return result;
     }
 }
