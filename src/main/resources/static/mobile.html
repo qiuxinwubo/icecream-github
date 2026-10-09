@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>雪糕点前台</title>
+    <link rel="stylesheet" href="./libs/amis-sdk/sdk.css" />
+    <link rel="stylesheet" href="./libs/amis-sdk/helper.css" />
+    <link rel="stylesheet" href="./libs/amis-sdk/iconfont.css" />
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f5f7fa; }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .app-content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            background: #f5f7fa;
+        }
+        .app-content .content-wrapper {
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            min-height: calc(100vh - 150px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        #amis-container { min-height: 400px; }
+
+        .app-tabbar {
+            display: flex;
+            background: #fff;
+            border-top: 1px solid #e8e8e8;
+            height: 64px;
+            flex-shrink: 0;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+        }
+        .app-tabbar .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+            transition: color 0.2s;
+            border: none;
+            background: transparent;
+        }
+        .app-tabbar .tab-item .icon { font-size: 22px; margin-bottom: 2px; }
+        .app-tabbar .tab-item.active { color: #1890ff; }
+        .app-tabbar .tab-item:active { background: #f5f5f5; }
+
+        .cxd-Button { min-height: 44px; font-size: 16px; }
+        .cxd-TextControl-input { min-height: 44px; font-size: 16px; }
+        .cxd-Form-item { margin-bottom: 16px; }
+
+        #camera-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="app-content">
+        <div class="content-wrapper">
+            <div id="amis-container">
+                <div style="padding:40px;text-align:center;color:#999;">⏳ 页面加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-tabbar" id="tabbar">
+        <button class="tab-item active" data-page="goods-query" onclick="switchTab('goods-query', this)">
+            <span class="icon">🔍</span><span>商品查询</span>
+        </button>
+        <button class="tab-item" data-page="goods-add" onclick="switchTab('goods-add', this)">
+            <span class="icon">➕</span><span>新增商品</span>
+        </button>
+        <button class="tab-item" data-page="goods-list" onclick="switchTab('goods-list', this)">
+            <span class="icon">📋</span><span>商品列表</span>
+        </button>
+        <button class="tab-item" data-page="factory-mgr" onclick="switchTab('factory-mgr', this)">
+            <span class="icon">🏭</span><span>厂商管理</span>
+        </button>
+    </div>
+</div>
+
+<input type="file" id="camera-input" accept="image/*" capture="environment" />
+
+<script src="./libs/amis-sdk/sdk.js"></script>
+<script>
+    // ============================================================
+    // 0. API 基础地址（移动端真机防跨域、防协议混合配置）
+    // ============================================================
+    const hostname = window.location.hostname;
+    const port = 8080;
+    
+    // 【关键修复点】：如果是 localhost 开发，用 http://localhost:8080
+    // 如果是手机通过局域网 IP（例如 192.168.x.x）访问，必须强制使用 http:// 开头的绝对路径。
+    // 不能使用 // 自适配协议，因为如果手机浏览器强行跳转 HTTPS，请求 HTTP 后端会直接被浏览器拦截(混合内容错误)。
+    let API_BASE;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        API_BASE = 'http://localhost:' + port;
+    } else {
+        API_BASE = 'http://' + hostname + ':' + port;
+    }
+    console.log('[移动端] 当前域名:', hostname);
+    console.log('[移动端] API_BASE地址:', API_BASE);
+
+    // ============================================================
+    // 1. 拍照上传 + 后端识别
+    // ============================================================
+
+    function openCamera() {
+        const input = document.getElementById('camera-input');
+        if (input) {
+            input.click();
+        } else {
+            alert('相机组件未初始化，请刷新重试');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const input = document.getElementById('camera-input');
+        if (!input) {
+            console.error('未找到 camera-input 元素');
+            return;
+        }
+
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const btn = document.querySelector('button[data-action="scan"]');
+            const originalText = btn ? btn.textContent : '扫码';
+            if (btn) btn.textContent = '⏳ 识别中...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            console.log('[扫码] 上传图片到:', API_BASE + '/api/scan/barcode');
+            fetch(API_BASE + '/api/scan/barcode', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(data => {
+                if (btn) btn.textContent = originalText;
+                
+                if (data.status === 0 && data.data) {
+                    // 兼容处理：接口返回的可能是条码（字符串），也可能是完整的商品对象
+                    const barcode = typeof data.data === 'string' ? data.data : data.data.barcode;
+                    const goodsData = typeof data.data === 'string' ? null : data.data;
+
+                    console.log('[扫码] ✅ 识别成功:', data);
+                    // 将条码和完整的商品对象一并传给回调
+                    onBarcodeScanned(barcode, goodsData);
+                } else {
+                    alert(data.msg || '识别失败，请重拍');
+                }
+            })
+            .catch(err => {
+                console.error('[扫码] ❌ 网络错误:', err);
+                if (btn) btn.textContent = originalText;
+                alert('网络错误，请检查网络后重试\n' + err.message);
+            });
+
+            this.value = '';
+        });
+    });
+
+    // ============================================================
+    // 【极致优化】直接使用扫码返回的数据，彻底告别页面重载和弹窗
+    // ============================================================
+    function onBarcodeScanned(code, rowData) {
+        console.log('[扫码] 准备直接渲染商品信息:', code);
+        
+        // 确保 Amis 实例已经初始化完毕
+        if (!window.amisStore || typeof window.amisStore.setData !== 'function') {
+            console.warn('Amis 实例尚未初始化，无法直接展示数据');
+            // 兜底方案：如果没挂载好，通过 URL 刷新触发加载（极少发生）
+            const currentUrl = window.location.href.split('?')[0];
+            window.location.replace(currentUrl + '?barcode=' + encodeURIComponent(code));
+            return;
+        }
+
+        // 1. 更新全局的 barcode 变量
+        window.amisStore.setData({ barcode: code });
+
+        // 2. 判断是否有完整的商品数据对象
+        if (rowData && typeof rowData === 'object') {
+            // 将数据直接注入到 mobileGoodsCrud 列表中（无闪屏，无二次请求）
+            window.amisStore.setData({
+                'mobileGoodsCrud': {
+                    'rows': [rowData], // 扫码查出的唯一一条数据
+                    'count': 1        // 设置总共 1 条
+                }
+            });
+            console.log('[扫码] ✅ 数据已直接推入商品列表:', rowData);
+        } else {
+            // 兼容方案：如果后端 scan 接口没有返回完整商品数据，则启用传统的 URL 带参重载
+            console.warn('[扫码] 接口未返回完整商品对象，执行保底方案：URL刷新');
+            const currentUrl = window.location.href.split('?')[0];
+            window.location.replace(currentUrl + '?barcode=' + encodeURIComponent(code));
+        }
+    }
+
+    window.openCamera = openCamera;
+    window.onBarcodeScanned = onBarcodeScanned;
+
+    // ============================================================
+    // 2. Amis 配置
+    // ============================================================
+    const PAGE_BASE = './pages/mobile';
+    const DEFAULT_OPTIONS = [
+        { label: '和路雪', value: '和路雪' },
+        { label: '伊利', value: '伊利' },
+        { label: '蒙牛', value: '蒙牛' },
+        { label: '红宝石', value: '红宝石' },
+        { label: '雀巢', value: '雀巢' }
+    ];
+
+    function injectOptionsToSelects(node, options) {
+        if (!node) return;
+        if (node.type === 'select' && node.name === 'factory') {
+            node.options = JSON.parse(JSON.stringify(options));
+            delete node.source;
+            return;
+        }
+        if (Array.isArray(node)) {
+            node.forEach(item => injectOptionsToSelects(item, options));
+            return;
+        }
+        if (typeof node === 'object') {
+            for (const key in node) {
+                if (node.hasOwnProperty(key) && key !== 'options') {
+                    const child = node[key];
+                    if (child && typeof child === 'object') {
+                        injectOptionsToSelects(child, options);
+                    }
+                }
+            }
+        }
+    }
+
+    function rewriteAllApiUrls(obj) {
+        if (!obj) return obj;
+        if (typeof obj === 'string') {
+            if (obj.startsWith('/api/')) return API_BASE + obj;
+            return obj;
+        }
+        if (Array.isArray(obj)) return obj.map(item => rewriteAllApiUrls(item));
+        if (typeof obj === 'object') {
+            const newObj = {};
+            for (const key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    newObj[key] = rewriteAllApiUrls(obj[key]);
+                }
+            }
+            return newObj;
+        }
+        return obj;
+    }
+
+    function loadPage(pageName) {
+        console.log('[移动端] 加载:', pageName);
+
+        const container = document.getElementById('amis-container');
+        container.innerHTML = '<div style="padding:40px;text-align:center;color:#999;">⏳ 加载中...</div>';
+
+        const pageConfigPath = `${PAGE_BASE}/${pageName}.json`;
+
+        Promise.all([
+            fetch(pageConfigPath).then(r => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.json();
+            }),
+            fetch(API_BASE + '/api/factory/list')
+                .then(r => {
+                    if (!r.ok) throw new Error('厂商接口异常');
+                    return r.json();
+                })
+                .then(data => {
+                    if (data.status === 0 && data.data && data.data.options) {
+                        return data.data.options;
+                    }
+                    return DEFAULT_OPTIONS;
+                })
+                .catch(() => DEFAULT_OPTIONS)
+        ])
+        .then(([pageConfig, options]) => {
+            injectOptionsToSelects(pageConfig, options);
+            pageConfig = rewriteAllApiUrls(pageConfig);
+
+            const amis = amisRequire('amis/embed');
+            const amisResult = amis.embed(
+                '#amis-container',
+                pageConfig,
+                {
+                    isPC: false,
+                    theme: 'cxd',
+                    // 【关键】在组件更新时获取 Amis 的数据 Store，并暴露给全局
+                    props: {
+                        onUpdate: (store) => {
+                            window.amisStore = store;
+                        }
+                    }
+                }
+            );
+            window.amisApp = amisResult;
+        })
+        .catch(err => {
+            console.error('[移动端] 加载失败:', err);
+            container.innerHTML = `
+                <div style="padding:40px;text-align:center;color:#d9534f;">
+                    <h3>⚠️ 页面加载失败</h3>
+                    <p>${err.message}</p>
+                </div>
+            `;
+        });
+    }
+
+    let currentPage = 'goods-query';
+
+    function switchTab(pageName, el) {
+        if (pageName === currentPage) return;
+
+        document.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
+        if (el) {
+            el.classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-item').forEach(item => {
+                if (item.dataset.page === pageName) item.classList.add('active');
+            });
+        }
+
+        currentPage = pageName;
+        loadPage(pageName);
+    }
+
+    window.onload = function() {
+        const defaultTab = document.querySelector('.tab-item[data-page="goods-query"]');
+        if (defaultTab) defaultTab.classList.add('active');
+        loadPage('goods-query');
+    };
+
+    window.switchTab = switchTab;
+</script>
+
+</body>
+</html>

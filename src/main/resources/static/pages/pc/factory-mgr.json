@@ -1,0 +1,108 @@
+{
+  "type": "page",
+  "title": "🏭 厂商管理",
+  "body": {
+    "type": "crud",
+    "api": {
+      "method": "get",
+      "url": "/api/factory/all"
+    },
+    "syncLocation": false,
+    "headerToolbar": [
+      {
+        "type": "button",
+        "label": "新增厂商",
+        "level": "primary",
+        "actionType": "dialog",
+        "dialog": {
+          "title": "新增厂商",
+          "body": {
+            "type": "form",
+            "api": {
+              "method": "post",
+              "url": "/api/factory/add"
+            },
+            "body": [
+              {
+                "type": "input-text",
+                "name": "name",
+                "label": "厂商名称",
+                "required": true
+              },
+              {
+                "type": "submit",
+                "label": "保存"
+              }
+            ]
+          }
+        }
+      },
+      "reload"
+    ],
+    "columns": [
+      {
+        "name": "id",
+        "label": "ID",
+        "width": 60
+      },
+      {
+        "name": "name",
+        "label": "厂商名称"
+      },
+      {
+        "type": "operation",
+        "label": "操作",
+        "width": 150,
+        "buttons": [
+          {
+            "label": "编辑",
+            "level": "primary",
+            "actionType": "dialog",
+            "dialog": {
+              "title": "编辑厂商",
+              "body": {
+                "type": "form",
+                "api": {
+                  "method": "put",
+                  "url": "/api/factory/update"
+                },
+                "data": "${data}",
+                "body": [
+                  {
+                    "type": "input-text",
+                    "name": "id",
+                    "label": "ID",
+                    "disabled": true
+                  },
+                  {
+                    "type": "input-text",
+                    "name": "name",
+                    "label": "厂商名称",
+                    "required": true
+                  },
+                  {
+                    "type": "submit",
+                    "label": "保存修改"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "label": "删除",
+            "level": "danger",
+            "actionType": "ajax",
+            "confirmText": "确定删除该厂商吗？",
+            "api": {
+              "method": "delete",
+              "url": "/api/factory/delete",
+              "data": {
+                "id": "${id}"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

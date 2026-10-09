@@ -1,0 +1,224 @@
+{
+  "type": "page",
+  "title": "📋 商品列表",
+  "body": {
+    "type": "crud",
+    "name": "goodsCrud",
+    "api": {
+      "method": "get",
+      "url": "/api/goods/list"
+    },
+    "syncLocation": false,
+    "headerToolbar": [
+      {
+        "type": "button",
+        "label": "📥 导入Excel",
+        "level": "primary",
+        "actionType": "dialog",
+        "dialog": {
+          "title": "导入商品数据",
+          "body": {
+            "type": "form",
+            "api": {
+              "method": "post",
+              "url": "/api/goods/import",
+              "dataType": "form-data"
+            },
+            "body": [
+              {
+                "type": "input-file",
+                "name": "file",
+                "label": "选择Excel文件",
+                "accept": ".xlsx,.xls",
+                "required": true,
+                "asBlob": true
+              },
+              {
+                "type": "submit",
+                "label": "上传导入"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "button",
+        "label": "📤 导出Excel",
+        "level": "success",
+        "actionType": "url",
+        "url": "/api/goods/export",
+        "blank": true
+      },
+      "reload"
+    ],
+    "filter": {
+      "title": "",
+      "mode": "horizontal",
+      "wrapWithPanel": false,
+      "body": [
+        {
+          "type": "input-text",
+          "name": "barcode",
+          "label": "条形码",
+          "placeholder": "条形码搜索",
+          "clearable": true,
+          "size": "md"
+        },
+        {
+          "type": "input-text",
+          "name": "name",
+          "label": "商品名称",
+          "placeholder": "模糊搜索",
+          "clearable": true,
+          "size": "md"
+        },
+        {
+          "type": "select",
+          "name": "factory",
+          "label": "厂商筛选",
+          "clearable": true,
+          "placeholder": "全部厂商",
+          "size": "md"
+        },
+        {
+          "type": "submit",
+          "label": "筛选",
+          "level": "primary",
+          "size": "md",
+          "style": {
+            "margin-left": "40px"
+          }
+        },
+        {
+          "type": "reset",
+          "label": "重置",
+          "size": "md"
+        }
+      ]
+    },
+    "columns": [
+      { "name": "id", "label": "ID", "width": 60 },
+      { "name": "barcode", "label": "条形码", "width": 150 },
+      { "name": "name", "label": "商品名称", "sortable": true, "width": 150 },
+      {
+        "name": "wholesalePrice",
+        "label": "批发价（元）",
+        "sortable": true,
+        "width": 120,
+        "tpl": "${wholesalePrice | number:2}"
+      },
+      {
+        "name": "retailPrice",
+        "label": "零售价（元）",
+        "width": 120,
+        "tpl": "${retailPrice | number:2}"
+      },
+      { "name": "factory", "label": "厂商", "width": 120 },
+      {
+        "type": "operation",
+        "label": "操作",
+        "width": 200,
+        "buttons": [
+          {
+            "label": "编辑",
+            "level": "primary",
+            "actionType": "dialog",
+            "dialog": {
+              "title": "编辑商品",
+              "size": "md",
+              "body": {
+                "type": "service",
+                "api": {
+                  "method": "get",
+                  "url": "/api/goods/query",
+                  "data": {
+                    "barcode": "${barcode}"
+                  },
+                  "adaptor": "if (payload.status === 404 || !payload.data) { return { data: null, msg: '商品不存在' }; } return { data: payload.data };"
+                },
+                "body": [
+                  {
+                    "type": "form",
+                    "mode": "horizontal",
+                    "api": {
+                      "method": "put",
+                      "url": "/api/goods/update",
+                      "data": {
+                        "barcode": "${barcode}",
+                        "name": "${name}",
+                        "wholesalePrice": "${wholesalePrice}",
+                        "retailPrice": "${retailPrice}",
+                        "factory": "${factory}"
+                      }
+                    },
+                    "data": "${data}",
+                    "body": [
+                      {
+                        "type": "input-text",
+                        "name": "barcode",
+                        "label": "条形码",
+                        "disabled": true,
+                        "static": true
+                      },
+                      {
+                        "type": "input-text",
+                        "name": "name",
+                        "label": "商品名称",
+                        "required": true,
+                        "placeholder": "请输入商品名称"
+                      },
+                      {
+                        "type": "input-number",
+                        "name": "wholesalePrice",
+                        "label": "批发价（元）",
+                        "required": true,
+                        "min": 0,
+                        "step": 0.01,
+                        "placeholder": "0.00"
+                      },
+                      {
+                        "type": "input-number",
+                        "name": "retailPrice",
+                        "label": "零售价（元）",
+                        "required": true,
+                        "min": 0,
+                        "step": 0.01,
+                        "placeholder": "0.00"
+                      },
+                      {
+                        "type": "select",
+                        "name": "factory",
+                        "label": "商品厂商",
+                        "required": true,
+                        "placeholder": "请选择厂商"
+                      },
+                      {
+                        "type": "submit",
+                        "label": "保存修改",
+                        "level": "primary"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "label": "删除",
+            "level": "danger",
+            "actionType": "ajax",
+            "confirmText": "确定要删除该商品吗？删除后不可恢复！",
+            "api": {
+              "method": "delete",
+              "url": "/api/goods/delete",
+              "data": {
+                "barcode": "${barcode}"
+              }
+            },
+            "reload": "goodsCrud"
+          }
+        ]
+      }
+    ]
+  }
+}

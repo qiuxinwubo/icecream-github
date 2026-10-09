@@ -1,0 +1,129 @@
+{
+  "type": "page",
+  "title": "📋 商品列表",
+  "body": {
+    "type": "crud",
+    "name": "mobileGoodsCrud",
+    "api": {
+      "method": "get",
+      "url": "/api/goods/list"
+    },
+    "syncLocation": false,
+    "headerToolbar": [
+      {
+        "type": "button",
+        "label": "🔄 刷新",
+        "level": "primary",
+        "actionType": "reload"
+      }
+    ],
+    "filter": {
+      "title": "筛选条件",
+      "wrapWithPanel": false,
+      "body": [
+        {
+          "type": "input-text",
+          "name": "barcode",
+          "label": "条形码",
+          "placeholder": "条形码搜索",
+          "size": "sm",
+          "clearable": true
+        },
+        {
+          "type": "input-text",
+          "name": "name",
+          "label": "商品名称",
+          "placeholder": "模糊搜索",
+          "size": "sm",
+          "clearable": true
+        },
+        {
+          "type": "select",
+          "name": "factory",
+          "label": "厂商",
+          "size": "sm",
+          "clearable": true,
+          "placeholder": "全部厂商"
+        },
+        {
+          "type": "submit",
+          "label": "筛选",
+          "level": "primary",
+          "size": "sm"
+        },
+        {
+          "type": "reset",
+          "label": "重置",
+          "size": "sm"
+        }
+      ]
+    },
+    "columns": [
+      { "name": "name", "label": "商品名称" },
+      { "name": "wholesalePrice", "label": "批发价", "tpl": "￥${wholesalePrice | number:2}" },
+      { "name": "retailPrice", "label": "零售价", "tpl": "￥${retailPrice | number:2}" },
+      { "name": "factory", "label": "厂商" },
+      {
+        "type": "operation",
+        "label": "操作",
+        "buttons": [
+          {
+            "label": "编辑",
+            "level": "primary",
+            "actionType": "dialog",
+            "dialog": {
+              "title": "编辑商品",
+              "body": {
+                "type": "service",
+                "api": {
+                  "method": "get",
+                  "url": "/api/goods/query",
+                  "data": { "barcode": "${barcode}" },
+                  "adaptor": "if (payload.status === 404 || !payload.data) { return { data: null }; } return { data: payload.data };"
+                },
+                "body": [
+                  {
+                    "type": "form",
+                    "mode": "horizontal",
+                    "api": {
+                      "method": "put",
+                      "url": "/api/goods/update",
+                      "data": {
+                        "barcode": "${barcode}",
+                        "name": "${name}",
+                        "wholesalePrice": "${wholesalePrice}",
+                        "retailPrice": "${retailPrice}",
+                        "factory": "${factory}"
+                      }
+                    },
+                    "data": "${data}",
+                    "body": [
+                      { "type": "input-text", "name": "barcode", "label": "条形码", "disabled": true, "static": true },
+                      { "type": "input-text", "name": "name", "label": "商品名称", "required": true },
+                      { "type": "input-number", "name": "wholesalePrice", "label": "批发价（元）", "required": true, "min": 0, "step": 0.01 },
+                      { "type": "input-number", "name": "retailPrice", "label": "零售价（元）", "required": true, "min": 0, "step": 0.01 },
+                      { "type": "select", "name": "factory", "label": "厂商", "required": true, "placeholder": "请选择厂商" },
+                      { "type": "submit", "label": "保存修改", "level": "primary", "block": true }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "label": "删除",
+            "level": "danger",
+            "actionType": "ajax",
+            "confirmText": "确定删除？",
+            "api": {
+              "method": "delete",
+              "url": "/api/goods/delete",
+              "data": { "barcode": "${barcode}" }
+            },
+            "reload": "mobileGoodsCrud"
+          }
+        ]
+      }
+    ]
+  }
+}

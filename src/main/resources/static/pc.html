@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>雪糕点后台管理</title>
+    <link rel="stylesheet" href="./libs/amis-sdk/sdk.css" />
+    <link rel="stylesheet" href="./libs/amis-sdk/helper.css" />
+    <link rel="stylesheet" href="./libs/amis-sdk/iconfont.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; }
+
+        .app-container { display: flex; height: 100vh; width: 100%; }
+
+        .app-sidebar {
+            width: 220px;
+            min-width: 220px;
+            background: #001529;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .app-sidebar .logo {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            background: #002140;
+            border-bottom: 1px solid #0a2a4a;
+            letter-spacing: 2px;
+            user-select: none;
+        }
+        .app-sidebar .logo span { color: #69c0ff; }
+        .app-sidebar .menu {
+            flex: 1;
+            padding: 16px 0;
+            overflow-y: auto;
+        }
+        .app-sidebar .menu-item {
+            display: block;
+            padding: 14px 24px;
+            color: rgba(255, 255, 255, 0.65);
+            text-decoration: none;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .app-sidebar .menu-item:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .app-sidebar .menu-item.active {
+            color: #fff;
+            background: rgba(24, 144, 255, 0.15);
+            border-left-color: #1890ff;
+        }
+        .app-sidebar .menu-item .icon { margin-right: 12px; font-size: 16px; }
+        .app-sidebar .menu-footer {
+            padding: 16px 24px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.3);
+            border-top: 1px solid #0a2a4a;
+            text-align: center;
+        }
+
+        .app-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f0f2f5;
+        }
+        .app-content .content-wrapper {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: calc(100vh - 40px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        #amis-container { min-height: 400px; }
+
+        @media (max-width: 768px) {
+            .app-sidebar { width: 60px; min-width: 60px; }
+            .app-sidebar .logo { font-size: 14px; }
+            .app-sidebar .logo span { display: none; }
+            .app-sidebar .menu-item { padding: 14px 16px; text-align: center; }
+            .app-sidebar .menu-item .label { display: none; }
+            .app-sidebar .menu-item .icon { margin-right: 0; }
+            .app-sidebar .menu-footer { display: none; }
+            .app-content { padding: 10px; }
+        }
+        /* 调整厂商下拉菜单的位置 */
+        .cxd-Select-menu {
+            transform: translateX(10px) !important;
+        }
+
+        /* 或者调整下拉菜单的左边距 */
+        .cxd-Select-popover {
+            margin-left: 260px !important;
+        }
+
+        /* 如果上面不行，可以调整下拉菜单的定位 */
+        .cxd-Select .cxd-Select-menu {
+            left: 0 !important;
+            right: auto !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="app-sidebar">
+        <div class="logo">❄️ <span>雪糕点</span></div>
+        <div class="menu">
+            <a class="menu-item active" data-page="goods-list" onclick="switchPage('goods-list', this)">
+                <span class="icon">📋</span><span class="label">商品列表</span>
+            </a>
+            <a class="menu-item" data-page="goods-query" onclick="switchPage('goods-query', this)">
+                <span class="icon">🔍</span><span class="label">商品查询</span>
+            </a>
+            <a class="menu-item" data-page="goods-add" onclick="switchPage('goods-add', this)">
+                <span class="icon">➕</span><span class="label">新增商品</span>
+            </a>
+            <a class="menu-item" data-page="factory-mgr" onclick="switchPage('factory-mgr', this)">
+                <span class="icon">🏭</span><span class="label">厂商管理</span>
+            </a>
+        </div>
+        <div class="menu-footer">v1.0.0</div>
+    </div>
+
+    <div class="app-content">
+        <div class="content-wrapper">
+            <div id="amis-container">
+                <div style="padding:40px;text-align:center;color:#999;">⏳ 页面加载中...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="./libs/amis-sdk/sdk.js"></script>
+<script>
+    // ============================================================
+    // 配置
+    // ============================================================
+    const API_BASE = window.location.origin;
+    const PAGE_BASE = './pages/pc';
+
+    const DEFAULT_OPTIONS = [
+        { label: '和路雪', value: '和路雪' },
+        { label: '伊利', value: '伊利' },
+        { label: '蒙牛', value: '蒙牛' },
+        { label: '红宝石', value: '红宝石' },
+        { label: '雀巢', value: '雀巢' }
+    ];
+
+    // ============================================================
+    // 核心：深度遍历 + 注入 options（带调试日志）
+    // ============================================================
+    function deepInjectOptions(node, options, path) {
+        if (!node) return;
+        path = path || 'root';
+
+        // 如果是 select 组件，且 name 是 factory
+        if (node.type === 'select' && node.name === 'factory') {
+            console.log('✅ [注入] 找到 select，路径:', path);
+            console.log('✅ [注入] 原 options:', node.options || '(空)');
+            console.log('✅ [注入] 注入后:', options.length, '项');
+            node.options = JSON.parse(JSON.stringify(options)); // 深拷贝，避免引用问题
+            delete node.source;
+            return;
+        }
+
+        // 数组遍历
+        if (Array.isArray(node)) {
+            node.forEach((item, index) => {
+                deepInjectOptions(item, options, path + `[${index}]`);
+            });
+            return;
+        }
+
+        // 对象：遍历所有属性
+        if (typeof node === 'object') {
+            for (const key in node) {
+                if (node.hasOwnProperty(key)) {
+                    const child = node[key];
+                    if (child && typeof child === 'object') {
+                        deepInjectOptions(child, options, path + '.' + key);
+                    }
+                }
+            }
+        }
+    }
+
+    // ============================================================
+    // 重写 API 地址
+    // ============================================================
+    function rewriteAllApiUrls(obj) {
+        if (!obj) return obj;
+        if (typeof obj === 'string') {
+            if (obj.startsWith('/api/')) return API_BASE + obj;
+            return obj;
+        }
+        if (Array.isArray(obj)) return obj.map(item => rewriteAllApiUrls(item));
+        if (typeof obj === 'object') {
+            const newObj = {};
+            for (const key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    newObj[key] = rewriteAllApiUrls(obj[key]);
+                }
+            }
+            return newObj;
+        }
+        return obj;
+    }
+
+    // ============================================================
+    // 加载页面
+    // ============================================================
+    function loadPage(pageName) {
+        console.log('========== [导航] 加载:', pageName, '==========');
+
+        const container = document.getElementById('amis-container');
+        container.innerHTML = '<div style="padding:40px;text-align:center;color:#999;">⏳ 加载中...</div>';
+
+        const pageConfigPath = `${PAGE_BASE}/${pageName}.json`;
+
+        Promise.all([
+            fetch(pageConfigPath).then(r => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.json();
+            }),
+            fetch(API_BASE + '/api/factory/list')
+                .then(r => {
+                    if (!r.ok) throw new Error('厂商接口异常');
+                    return r.json();
+                })
+                .then(data => {
+                    if (data.status === 0 && data.data && data.data.options) {
+                        console.log('✅ [加载] 厂商数据:', data.data.options.length, '项');
+                        return data.data.options;
+                    }
+                    console.warn('[加载] 使用默认厂商数据');
+                    return DEFAULT_OPTIONS;
+                })
+                .catch(() => {
+                    console.warn('[加载] 使用默认厂商数据');
+                    return DEFAULT_OPTIONS;
+                })
+        ])
+        .then(([pageConfig, options]) => {
+            console.log('✅ [加载] pageConfig 加载成功');
+
+            // 1. 注入 options（深拷贝注入，独立于页面 JSON）
+            deepInjectOptions(pageConfig, options);
+            console.log('✅ [加载] 注入完成');
+
+            // 2. 重写 API
+            pageConfig = rewriteAllApiUrls(pageConfig);
+            console.log('✅ [加载] API 重写完成');
+
+            // 3. 渲染 Amis
+            const amis = amisRequire('amis/embed');
+            amis.embed(
+                '#amis-container',
+                pageConfig,
+                {
+                    isPC: true,
+                    theme: 'cxd'
+                }
+            );
+            console.log('✅ [加载] Amis 渲染完成');
+        })
+        .catch(err => {
+            console.error('❌ [加载] 失败:', err);
+            container.innerHTML = `
+                <div style="padding:40px;text-align:center;color:#d9534f;">
+                    <h3>⚠️ 页面加载失败</h3>
+                    <p>${err.message}</p>
+                </div>
+            `;
+        });
+    }
+
+    // ============================================================
+    // 菜单切换
+    // ============================================================
+    let currentPage = 'goods-list';
+
+    function switchPage(pageName, el) {
+        if (pageName === currentPage) return;
+
+        document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+        if (el) {
+            el.classList.add('active');
+        } else {
+            document.querySelectorAll('.menu-item').forEach(item => {
+                if (item.dataset.page === pageName) item.classList.add('active');
+            });
+        }
+
+        currentPage = pageName;
+        loadPage(pageName);
+    }
+
+    // ============================================================
+    // 启动
+    // ============================================================
+    window.onload = function() {
+        currentPage = 'goods-list';
+        loadPage('goods-list');
+    };
+
+    window.switchPage = switchPage;
+</script>
+
+</body>
+</html>

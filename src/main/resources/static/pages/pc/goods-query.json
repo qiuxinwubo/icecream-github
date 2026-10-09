@@ -1,0 +1,66 @@
+{
+  "type": "page",
+  "title": "🔍 商品查询",
+  "body": {
+    "type": "crud",
+    "api": {
+      "method": "get",
+      "url": "/api/goods/query",
+      "data": {
+        "barcode": "${barcode}"
+      },
+      "adaptor": "if (payload.status === 404 || !payload.data) { return { data: { rows: [], count: 0, msg: '未查询到该商品！' } }; } return { data: { rows: [payload.data], count: 1, msg: 'ok' } };"
+    },
+    "syncLocation": false,
+    "headerToolbar": [],
+    "bulkActions": [],
+    "itemCheckableOn": false,
+    "hideQuickSaveBtn": true,
+    "hideSaveBtn": true,
+    "filter": {
+      "title": "",
+      "mode": "horizontal",
+      "wrapWithPanel": false,
+      "submitText": "",
+      "body": [
+        {
+          "type": "input-group",
+          "label": "条形码",
+          "body": [
+            {
+              "type": "input-text",
+              "name": "barcode",
+              "placeholder": "请输入条形码",
+              "size": "lg",
+              "clearable": true
+            },
+            {
+              "type": "submit",
+              "label": "查 询",
+              "level": "primary"
+            }
+          ]
+        }
+      ]
+    },
+    "columns": [
+      { "name": "id", "label": "ID", "width": 60 },
+      { "name": "barcode", "label": "条形码", "width": 150 },
+      { "name": "name", "label": "商品名称", "sortable": true, "width": 150 },
+      {
+        "name": "wholesalePrice",
+        "label": "批发价（元）",
+        "sortable": true,
+        "width": 120,
+        "tpl": "${wholesalePrice | number:2}"
+      },
+      {
+        "name": "retailPrice",
+        "label": "零售价（元）",
+        "width": 120,
+        "tpl": "${retailPrice | number:2}"
+      },
+      { "name": "factory", "label": "厂商", "width": 120 }
+    ]
+  }
+}

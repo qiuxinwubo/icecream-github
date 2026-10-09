@@ -1,0 +1,96 @@
+{
+  "type": "page",
+  "title": "✏️ 修改商品",
+  "toolbar": [
+    {
+      "type": "button",
+      "label": "← 返回列表",
+      "level": "default",
+      "actionType": "url",
+      "url": "./pc.html?page=goods-list"
+    }
+  ],
+  "body": [
+    {
+      "type": "service",
+      "id": "editService",
+      "api": {
+        "method": "get",
+        "url": "/api/goods/query",
+        "data": {
+          "barcode": "${barcode}"
+        },
+        "sendOn": "barcode"
+      },
+      "body": [
+        {
+          "type": "form",
+          "mode": "horizontal",
+          "api": {
+            "method": "put",
+            "url": "/api/goods/update",
+            "data": {
+              "barcode": "${barcode}",
+              "wholesalePrice": "${wholesalePrice}",
+              "retailPrice": "${retailPrice}",
+              "factory": "${factory}"
+            }
+          },
+          "data": "${data}",
+          "body": [
+            {
+              "type": "input-text",
+              "name": "barcode",
+              "label": "条形码",
+              "disabled": true,
+              "static": true
+            },
+            {
+              "type": "input-text",
+              "name": "name",
+              "label": "商品名称",
+              "disabled": true,
+              "static": true
+            },
+            {
+              "type": "input-number",
+              "name": "wholesalePrice",
+              "label": "批发价（元）",
+              "required": true,
+              "min": 0,
+              "step": 0.01,
+              "placeholder": "0.00"
+            },
+            {
+              "type": "input-number",
+              "name": "retailPrice",
+              "label": "零售价（元）",
+              "required": true,
+              "min": 0,
+              "step": 0.01,
+              "placeholder": "0.00"
+            },
+            {
+              "type": "select",
+              "name": "factory",
+              "label": "商品厂商",
+              "required": true,
+              "placeholder": "请选择厂商"
+            },
+            {
+              "type": "submit",
+              "label": "保存修改",
+              "level": "primary"
+            }
+          ]
+        },
+        {
+          "type": "alert",
+          "level": "warning",
+          "body": "⚠️ ${msg}",
+          "visibleOn": "this.status === 404"
+        }
+      ]
+    }
+  ]
+}
