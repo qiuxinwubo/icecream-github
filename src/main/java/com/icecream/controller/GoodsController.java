@@ -71,8 +71,8 @@ public class GoodsController {
     }
 
     @PostMapping("/import")
-    public ImportResult importGoods(@RequestParam("file") MultipartFile file) throws IOException {
+    public Map<String, Object> importGoods(@RequestParam("file") MultipartFile file) throws IOException {
         ImportResult result = goodsService.importGoods(file);
-        return result;
+        return Map.of("status", 0, "data", result);
     }
 }

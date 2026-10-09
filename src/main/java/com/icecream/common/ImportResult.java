@@ -33,36 +33,4 @@ public class ImportResult {
      * 失败详情列表（每条错误信息）
      */
     private List<String> failList;
-
-    public int getSuccessCount() {
-        return successCount;
-    }
-
-    public void setSuccessCount(int successCount) {
-        this.successCount = successCount;
-    }
-
-    public int getFailCount() {
-        return failCount;
-    }
-
-    public void setFailCount(int failCount) {
-        this.failCount = failCount;
-    }
-
-    public List<String> getSuccessList() {
-        return successList;
-    }
-
-    public void setSuccessList(List<String> successList) {
-        this.successList = successList;
-    }
-
-    public List<String> getFailList() {
-        return failList;
-    }
-
-    public void setFailList(List<String> failList) {
-        this.failList = failList;
-    }
 }

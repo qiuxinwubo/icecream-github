@@ -19,6 +19,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 @Service
 public class GoodsServiceImpl implements GoodsService {
 
@@ -70,9 +73,16 @@ public class GoodsServiceImpl implements GoodsService {
         // 导出全部符合条件的商品（不分页）
         List<Goods> list = goodsMapper.search(barcode, name, vendorId, 0, Integer.MAX_VALUE);
 
+        // 生成文件名：export_goods_年月日时分秒.xlsx
+        String timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+        String fileName = "export_goods_" + timestamp + ".xlsx";
+
+        // 对文件名进行编码（防乱码，纯英文也可不转，但建议保留）
+        String encodedFileName = new String(fileName.getBytes("UTF-8"), "ISO-8859-1");
+
         // 设置响应头
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setHeader("Content-Disposition", "attachment; filename=goods.xlsx");
+        response.setHeader("Content-Disposition", "attachment; filename=" + encodedFileName);
 
         // 用 EasyExcel 导出（你项目里已有 easyexcel 依赖）
         EasyExcel.write(response.getOutputStream(), Goods.class)

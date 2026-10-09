@@ -23,8 +23,10 @@ public class FactoryController {
         List<Map<String, Object>> options = list.stream()
                 .map(f -> Map.<String, Object>of("label", f.getName(), "value", f.getId()))
                 .collect(Collectors.toList());
-        return Map.of("data", Map.of("options", options));
+//        return Map.of("data", Map.of("options", options));
+        return Map.of("status", 0, "data", Map.of("options", options));
     }
+
 
     @GetMapping("/all")
     public List<Factory> all() {
@@ -52,8 +54,8 @@ public class FactoryController {
     }
 
     @DeleteMapping("/delete")
-    public Map<String, Object> delete(@RequestBody Map<String, Long> body) {
-        factoryService.delete(body.get("id"));
+    public Map<String, Object> delete(@RequestParam Long id) {
+        factoryService.delete(id);
         return Map.of("status", 0);
     }
 }
